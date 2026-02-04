@@ -601,11 +601,18 @@
 
     <!-- Components Tab -->
     <div class="tab-content" id="tab-components">
-      <div class="action-bar">
-        <button class="action-btn" id="btn-select-all-comp">Select All</button>
-        <button class="action-btn" id="btn-deselect-all-comp">Deselect All</button>
-        <button class="action-btn" id="btn-toggle-dnp-comp">Toggle DNP</button>
-        <button class="action-btn" id="btn-delete-selected-comp">Delete Selected</button>
+      <div class="action-bar" style="display: flex; justify-content: space-between;">
+        <div class="action-bar-left">
+          <button class="action-btn" id="btn-select-all-comp">Select All</button>
+          <button class="action-btn" id="btn-deselect-all-comp">Deselect All</button>
+          <button class="action-btn" id="btn-rotate-left">Rotate Left</button>
+          <button class="action-btn" id="btn-rotate-right">Rotate Right</button>
+          <button class="action-btn" id="btn-toggle-dnp-comp">Toggle DNP</button>
+          <button class="action-btn" id="btn-delete-selected-comp">Delete Selected</button>
+        </div>
+        <div class="action-bar-right">
+          <button class="action-btn" id="btn-components-help">Help</button>
+        </div>
       </div>
       <div class="table-container">
         <table id="table-components">
@@ -1103,8 +1110,6 @@
 
     function renderComponentsTable() {
       if (!APP.xfile) return;
-      // Clear component selections on render
-      APP.xfile.components.forEach(c => c.select = false);
 
       const table = document.getElementById('table-components');
       const headers = [
@@ -1907,6 +1912,92 @@
       scheduleSave();
     }
 
+    // Rotate selected components
+    // CHM-T48VB: 0° = no rotation, -90° = clockwise, +90° = counter-clockwise, ±180° = flipped
+    function rotateComponents(degrees) {
+      const selected = APP.xfile.components.filter(c => c.select);
+      if (selected.length === 0) {
+        log('No components selected for rotation', 'warn');
+        return;
+      }
+      selected.forEach(c => {
+        c.angle = normalizeAngle(c.angle + degrees);
+      });
+      log(`Rotated ${selected.length} component(s) by ${degrees}°`, 'info');
+      renderComponentsTable();
+      scheduleSave();
+    }
+
+    // Normalize angle to -180 to 180 range
+    function normalizeAngle(angle) {
+      while (angle > 180) angle -= 360;
+      while (angle < -180) angle += 360;
+      return angle;
+    }
+
+    // Components Help modal
+    function showComponentsHelp() {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h3>Components Tab Help</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <h4>Angle/Rotation (CHM-T48VB)</h4>
+            <ul>
+              <li><strong>0°</strong> - No rotation (component as-is from tape)</li>
+              <li><strong>90°</strong> - Rotated 90° counter-clockwise (left)</li>
+              <li><strong>-90°</strong> - Rotated 90° clockwise (right)</li>
+              <li><strong>180° or -180°</strong> - Rotated 180° (flipped)</li>
+            </ul>
+            <p style="margin: 8px 0; color: var(--text-muted);">Positive angles rotate counter-clockwise, negative angles rotate clockwise.</p>
+
+            <h4 style="margin-top: 16px;">Buttons</h4>
+            <ul>
+              <li><strong>Select All</strong> - Select all components for bulk operations</li>
+              <li><strong>Deselect All</strong> - Clear all selections</li>
+              <li><strong>Rotate Left</strong> - Add 90° to selected components (counter-clockwise)</li>
+              <li><strong>Rotate Right</strong> - Subtract 90° from selected components (clockwise)</li>
+              <li><strong>Toggle DNP</strong> - Toggle "Do Not Place" on selected components</li>
+              <li><strong>Delete Selected</strong> - Remove selected components from the job</li>
+            </ul>
+
+            <h4 style="margin-top: 16px;">Columns</h4>
+            <ul>
+              <li><strong>No.</strong> - Row number (auto-assigned, 0 to N-1)</li>
+              <li><strong>ID</strong> - Component identifier</li>
+              <li><strong>STNo.</strong> - Station number (links to Material Stack ID)</li>
+              <li><strong>PHead</strong> - Pickup head: 1 (left nozzle) or 2 (right nozzle)</li>
+              <li><strong>DeltX/DeltY</strong> - Placement position on PCB in millimeters</li>
+              <li><strong>Angle</strong> - Rotation angle (-180° to 180°)</li>
+              <li><strong>Height</strong> - Component height in mm (max 5mm)</li>
+              <li><strong>Skip</strong> - Skip flags (should match Station Status)</li>
+              <li><strong>Speed</strong> - Placement speed (0=100%, or 50-100%)</li>
+              <li><strong>Explain</strong> - Reference designator (e.g., R1, C5)</li>
+              <li><strong>Note</strong> - Component value (should match Station Note)</li>
+              <li><strong>DNP</strong> - Do Not Place flag (excluded from export)</li>
+            </ul>
+
+            <h4 style="margin-top: 16px;">Tips</h4>
+            <ul>
+              <li>Double-click STNo, PHead, or DNP cells to toggle/edit quickly</li>
+              <li>Click column headers to sort the table</li>
+              <li>Components with DNP=Yes are shown with red background</li>
+              <li>Selected rows are shown with green background</li>
+            </ul>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+    }
+
     // Offset handling
     function updateOffsetInputs() {
       if (!APP.xfile) return;
@@ -2081,8 +2172,11 @@
       // Action buttons - Components
       document.getElementById('btn-select-all-comp').addEventListener('click', () => toggleSelectAll('components', true));
       document.getElementById('btn-deselect-all-comp').addEventListener('click', () => toggleSelectAll('components', false));
+      document.getElementById('btn-rotate-left').addEventListener('click', () => rotateComponents(90));
+      document.getElementById('btn-rotate-right').addEventListener('click', () => rotateComponents(-90));
       document.getElementById('btn-toggle-dnp-comp').addEventListener('click', () => toggleDNP('components'));
       document.getElementById('btn-delete-selected-comp').addEventListener('click', () => deleteSelected('components'));
+      document.getElementById('btn-components-help').addEventListener('click', showComponentsHelp);
 
       // Action buttons - Stacks
       document.getElementById('btn-select-all-stack').addEventListener('click', () => toggleSelectAll('stacks', true));
