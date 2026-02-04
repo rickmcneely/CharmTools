@@ -56,6 +56,7 @@ func main() {
 	mux.Handle("/api/validate", h.SessionMiddleware(http.HandlerFunc(h.Validate)))
 	mux.Handle("/api/stacks/export", h.SessionMiddleware(http.HandlerFunc(h.StacksExport)))
 	mux.Handle("/api/stacks/import", h.SessionMiddleware(http.HandlerFunc(h.StacksImport)))
+	mux.HandleFunc("/api/stats", h.GetStats) // No session middleware needed for stats
 
 	// Static files
 	staticDir := filepath.Join(".", "web", "static")

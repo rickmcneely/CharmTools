@@ -19,6 +19,13 @@ type FileStore struct {
 	maxAge     time.Duration
 	mu         sync.RWMutex
 	sessions   map[string]*sessionData
+	stats      *Stats
+}
+
+// Stats tracks usage statistics
+type Stats struct {
+	TotalUsers      int `json:"totalUsers"`
+	TotalPOSUploads int `json:"totalPosUploads"`
 }
 
 type sessionData struct {
@@ -38,6 +45,12 @@ func NewFileStore(baseDir string, maxAge time.Duration) (*FileStore, error) {
 		baseDir:  baseDir,
 		maxAge:   maxAge,
 		sessions: make(map[string]*sessionData),
+		stats:    &Stats{},
+	}
+
+	// Load stats from disk
+	if err := store.loadStats(); err != nil {
+		fmt.Printf("Warning: could not load stats: %v\n", err)
 	}
 
 	// Load existing sessions from disk
@@ -47,6 +60,44 @@ func NewFileStore(baseDir string, maxAge time.Duration) (*FileStore, error) {
 	}
 
 	return store, nil
+}
+
+// loadStats loads stats from disk
+func (fs *FileStore) loadStats() error {
+	statsPath := filepath.Join(fs.baseDir, "stats.json")
+	data, err := os.ReadFile(statsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // No stats file yet
+		}
+		return err
+	}
+	return json.Unmarshal(data, fs.stats)
+}
+
+// saveStats saves stats to disk (caller must hold lock)
+func (fs *FileStore) saveStats() error {
+	data, err := json.MarshalIndent(fs.stats, "", "  ")
+	if err != nil {
+		return err
+	}
+	statsPath := filepath.Join(fs.baseDir, "stats.json")
+	return os.WriteFile(statsPath, data, 0644)
+}
+
+// GetStats returns current stats
+func (fs *FileStore) GetStats() Stats {
+	fs.mu.RLock()
+	defer fs.mu.RUnlock()
+	return *fs.stats
+}
+
+// IncrementPOSUploads increments the POS upload counter
+func (fs *FileStore) IncrementPOSUploads() {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	fs.stats.TotalPOSUploads++
+	fs.saveStats()
 }
 
 // loadSessions loads all existing session files from disk
@@ -110,7 +161,25 @@ func (fs *FileStore) CreateSession() (string, error) {
 		return "", err
 	}
 
+	// Increment user count
+	fs.stats.TotalUsers++
+	fs.saveStats()
+
 	return sessionID, nil
+}
+
+// TouchSession updates the session's UpdatedAt timestamp to restart the 10-day expiry
+func (fs *FileStore) TouchSession(sessionID string) error {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+
+	session, ok := fs.sessions[sessionID]
+	if !ok {
+		return fmt.Errorf("session not found: %s", sessionID)
+	}
+
+	session.UpdatedAt = time.Now()
+	return fs.saveSession(sessionID)
 }
 
 // GetSession retrieves a session by ID

@@ -324,6 +324,39 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 		}
 	}
 
+	// === PCB SIZE VALIDATION (CHM-T48VB specs) ===
+	// Machine specs: PCB max size 345mm(L) x 355mm(W), XY travel 510mm x 460mm
+	const maxPCBX = 345.0
+	const maxPCBY = 355.0
+
+	var maxX, maxY float64
+	for _, c := range activeComponents {
+		// Apply global offset to get actual placement position
+		x := c.DeltX + xf.GlobalOffset.X
+		y := c.DeltY + xf.GlobalOffset.Y
+		if x > maxX {
+			maxX = x
+		}
+		if y > maxY {
+			maxY = y
+		}
+	}
+
+	if maxX > maxPCBX {
+		result.Warnings = append(result.Warnings, DPVValidationError{
+			Type:    "pcb_size_x",
+			Field:   "EComponent.DeltX",
+			Message: fmt.Sprintf("Component X position %.2fmm exceeds PCB max width of %.0fmm (CHM-T48VB limit)", maxX, maxPCBX),
+		})
+	}
+	if maxY > maxPCBY {
+		result.Warnings = append(result.Warnings, DPVValidationError{
+			Type:    "pcb_size_y",
+			Field:   "EComponent.DeltY",
+			Message: fmt.Sprintf("Component Y position %.2fmm exceeds PCB max length of %.0fmm (CHM-T48VB limit)", maxY, maxPCBY),
+		})
+	}
+
 	// === PANEL_ARRAY VALIDATION ===
 	// Panel_Array is REQUIRED - machine won't allow PCB calibration without it
 	if len(xf.PanelArray) == 0 {

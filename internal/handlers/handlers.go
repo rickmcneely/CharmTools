@@ -72,6 +72,9 @@ func (h *Handler) UploadPOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Increment POS uploads counter
+	h.store.IncrementPOSUploads()
+
 	setJSONContentType(w)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":    true,
@@ -512,4 +515,23 @@ func containsString(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// GetStats handles GET /api/stats
+func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w)
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	stats := h.store.GetStats()
+
+	setJSONContentType(w)
+	json.NewEncoder(w).Encode(stats)
 }

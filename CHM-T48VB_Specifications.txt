@@ -1,0 +1,45 @@
+CHM-T48VB  PICK AND PLACE MACHINE 
+	* Total 58 feeders(Left and right), put more tapes
+	* High accuracy mounting with 2 Vision cameras
+	* XY Axis motors Closed-loop control
+	* Embedded Linux system
+	* Industry level high reliable mainboard
+	* PC in build, no need externel PC
+
+CCD vision camera       Touch screen/USB mouse                  
+	* High qaulity Juki Nozzles
+	* Multi PCB assembly support
+	* All-in-one Machine
+	* Cut tape/ bulk IC/ IC tray support
+
+X Axis square rail
+Pull pin auto reset
+Vibration feeder supported
+Support IC tray
+
+CHM-T48VB Specifications:
+XYZ Axis travel					510mm(X)×460mm(Y)×15mm(Z)
+PCB max size					345mm(L)×355mm(W); heighest componnent: 5mm
+Support components				0402/0603～5050/SOT/SOP/QFP/QFN/BGA, etc.
+Mounting speed					Without vision:6000cph;  With Vision:4000cph
+Precision					±0.025mm
+Placement head					2 heads
+PCB thickness					0.6-3.5mm
+Transmission system				Synchronous belt+polished rod
+Feeding system					58 feeders(width 8/12/16/24mm); 14pcs front bulk IC; Custom IC tray 10pcs
+Demension					1320mm(L)×705mm(W)×335mm(H)
+Vision detection				Double camera (up & down)
+Motor control					XY Axis stepper motor with encoder closed-loop control,never lose step
+Components leakage detection			Z Axis origin detection; Vision detection; Vacuum detection
+Main board					High-reliability industry motherboard
+Touch Screen					7 inches industry LCD screen
+Operation system				Embedded Linux system
+Air pump					Built-in 2 vacuum pumps
+Pull pin needle auto return			Yes, to avoid pull pin broke
+Support software				Altium designer,Protell99SE,PADS,Kicad,Eagle,Cadint,Cadence Orcad,Cadence Allegro,PROTEUS..etc
+Power supply					AC220V 50Hz / AC110V 60Hz
+Power						250W
+Net weight					55Kg
+
+https://www.charmhigh-tech.com/
+https://www.youtube.com/@KimiLiuCharmhigh/videos

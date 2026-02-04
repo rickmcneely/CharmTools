@@ -59,6 +59,8 @@ func (h *Handler) SessionMiddleware(next http.Handler) http.Handler {
 				HttpOnly: true,
 				SameSite: http.SameSiteLaxMode,
 			})
+			// Touch session to restart 10-day server-side expiry
+			h.store.TouchSession(sessionID)
 		}
 
 		// Add session ID to context
