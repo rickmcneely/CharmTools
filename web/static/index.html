@@ -598,12 +598,18 @@
 
     <!-- Material Stacks Tab -->
     <div class="tab-content" id="tab-stacks">
-      <div class="action-bar">
-        <button class="action-btn" id="btn-select-all-stack">Select All</button>
-        <button class="action-btn" id="btn-deselect-all-stack">Deselect All</button>
-        <button class="action-btn" id="btn-toggle-head-stack">Toggle Head</button>
-        <button class="action-btn" id="btn-toggle-dnp-stack">Toggle DNP</button>
-        <button class="action-btn" id="btn-delete-selected-stack">Delete Selected</button>
+      <div class="action-bar" style="display: flex; justify-content: space-between;">
+        <div class="action-bar-left">
+          <button class="action-btn" id="btn-select-all-stack">Select All</button>
+          <button class="action-btn" id="btn-deselect-all-stack">Deselect All</button>
+          <button class="action-btn" id="btn-toggle-head-stack">Toggle Head</button>
+          <button class="action-btn" id="btn-toggle-dnp-stack">Toggle DNP</button>
+          <button class="action-btn" id="btn-delete-selected-stack">Delete Selected</button>
+        </div>
+        <div class="action-bar-right">
+          <button class="action-btn" id="btn-import-stacks">Import Stacks</button>
+          <button class="action-btn" id="btn-export-stacks">Export Stacks</button>
+        </div>
       </div>
       <div class="table-container">
         <table id="table-stacks">
@@ -648,6 +654,7 @@
   <!-- Hidden File Inputs -->
   <input type="file" class="hidden-input" id="file-input-pos" accept=".pos,.csv">
   <input type="file" class="hidden-input" id="file-input-stack" accept=".stack,.dpv">
+  <input type="file" class="hidden-input" id="file-input-stacks-import" accept=".stacks">
 
   <!-- Getting Started Modal -->
   <div class="modal-overlay" id="modal-getting-started">
@@ -886,6 +893,51 @@
         await loadXFile();
       } catch (err) {
         log(`Failed to upload Stack: ${err.message}`, 'error');
+      }
+    }
+
+    // Material Stacks import/export
+    async function importStacks(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const result = await api('/api/stacks/import', {
+          method: 'POST',
+          body: formData
+        });
+        log(`Imported ${result.filename}: ${result.merged} stations updated, ${result.added} added`, 'info');
+        await loadXFile();
+        renderStacksTable();
+      } catch (err) {
+        log(`Failed to import stacks: ${err.message}`, 'error');
+      }
+    }
+
+    async function exportStacks() {
+      if (!APP.xfile || APP.xfile.stations.length === 0) {
+        log('No Material Stacks to export', 'warn');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/stacks/export');
+        if (!response.ok) {
+          const err = await response.text();
+          log(`Export failed: ${err}`, 'error');
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'material.stacks';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        log('Exported material.stacks', 'info');
+      } catch (err) {
+        log(`Export error: ${err.message}`, 'error');
       }
     }
 
@@ -2017,6 +2069,18 @@
       document.getElementById('btn-toggle-head-stack').addEventListener('click', () => toggleHead('stacks'));
       document.getElementById('btn-toggle-dnp-stack').addEventListener('click', () => toggleDNP('stacks'));
       document.getElementById('btn-delete-selected-stack').addEventListener('click', () => deleteSelected('stacks'));
+
+      // Material Stacks import/export
+      document.getElementById('btn-import-stacks').addEventListener('click', () => {
+        document.getElementById('file-input-stacks-import').click();
+      });
+      document.getElementById('btn-export-stacks').addEventListener('click', exportStacks);
+      document.getElementById('file-input-stacks-import').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          importStacks(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
 
       log('CharmTool initialized', 'info');
     });

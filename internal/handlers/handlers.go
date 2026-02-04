@@ -375,6 +375,17 @@ func (h *Handler) Export(w http.ResponseWriter, r *http.Request) {
 	}
 	io.WriteString(readmeWriter, readmeContent)
 
+	// Add material.stacks file (calibrated feeder positions)
+	if len(xf.Stations) > 0 {
+		stacksContent := models.GenerateStacksFile(xf)
+		stacksWriter, err := zipWriter.Create("material.stacks")
+		if err != nil {
+			http.Error(w, "Failed to create ZIP", http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(stacksWriter, stacksContent)
+	}
+
 	if err := zipWriter.Close(); err != nil {
 		http.Error(w, "Failed to finalize ZIP", http.StatusInternalServerError)
 		return
@@ -386,4 +397,119 @@ func (h *Handler) Export(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", zipFilename))
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
 	w.Write(buf.Bytes())
+}
+
+// StacksExport handles GET /api/stacks/export
+func (h *Handler) StacksExport(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w)
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionID := getSessionID(r)
+	if sessionID == "" {
+		http.Error(w, "No session", http.StatusUnauthorized)
+		return
+	}
+
+	xf, err := h.store.GetSession(sessionID)
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusNotFound)
+		return
+	}
+
+	// Generate .stacks content (same format as .stack but with .stacks extension)
+	stacksContent := models.GenerateStacksFile(xf)
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"material.stacks\"")
+	w.Write([]byte(stacksContent))
+}
+
+// StacksImport handles POST /api/stacks/import
+func (h *Handler) StacksImport(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w)
+
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionID := getSessionID(r)
+	if sessionID == "" {
+		http.Error(w, "No session", http.StatusUnauthorized)
+		return
+	}
+
+	xf, err := h.store.GetSession(sessionID)
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusNotFound)
+		return
+	}
+
+	// Parse multipart form
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "No file provided", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Read file content
+	content, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
+		return
+	}
+
+	// Parse and merge the stacks file
+	merged, added, err := models.MergeStacksFile(xf, string(content))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse stacks file: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Track imported stacks file
+	filename := header.Filename
+	if !containsString(xf.StackFiles, filename) {
+		xf.StackFiles = append(xf.StackFiles, filename)
+	}
+
+	// Save updated xfile
+	if err := h.store.UpdateSession(sessionID, xf); err != nil {
+		http.Error(w, "Failed to save session", http.StatusInternalServerError)
+		return
+	}
+
+	setJSONContentType(w)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":  true,
+		"filename": filename,
+		"merged":   merged,
+		"added":    added,
+	})
+}
+
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }

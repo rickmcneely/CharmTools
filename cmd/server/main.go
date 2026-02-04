@@ -54,6 +54,8 @@ func main() {
 	mux.Handle("/api/xfile/update", h.SessionMiddleware(http.HandlerFunc(h.UpdateXFile)))
 	mux.Handle("/api/export", h.SessionMiddleware(http.HandlerFunc(h.Export)))
 	mux.Handle("/api/validate", h.SessionMiddleware(http.HandlerFunc(h.Validate)))
+	mux.Handle("/api/stacks/export", h.SessionMiddleware(http.HandlerFunc(h.StacksExport)))
+	mux.Handle("/api/stacks/import", h.SessionMiddleware(http.HandlerFunc(h.StacksImport)))
 
 	// Static files
 	staticDir := filepath.Join(".", "web", "static")

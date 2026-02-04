@@ -234,7 +234,7 @@ func rederiveComponentSTNo(xf *XFile) {
 	}
 }
 
-// GenerateStack generates a STACK file from XFile stations
+// GenerateStack generates a STACK file from XFile stations (for DPV export)
 func GenerateStack(xf *XFile) string {
 	var sb strings.Builder
 
@@ -251,10 +251,95 @@ func GenerateStack(xf *XFile) string {
 			continue
 		}
 		sb.WriteString(fmt.Sprintf("Station,%d,%d,%d,%.2f,%.2f,%d,%s,%.2f,%d,%d,%d,%d,%.2f,%d,%d,%d,%d\r\n",
-			i, s.ID, s.PHead, s.DeltX, s.DeltY, s.FeedRates, csvEscape(s.Note),
+			i, s.ID, s.PHead, s.DeltX, s.DeltY, s.FeedRates, stackCsvEscape(s.Note),
 			s.Height, s.Speed, s.Status, s.NPixSizeX, s.NPixSizeY,
 			s.HeightTake, s.DelayTake, s.NPullStripSpeed, s.NThreshold, s.NVisualRadio))
 	}
 
 	return sb.String()
+}
+
+// GenerateStacksFile generates a .stacks file from XFile stations (for Material Stacks export)
+func GenerateStacksFile(xf *XFile) string {
+	var sb strings.Builder
+
+	sb.WriteString("separated\r\n")
+	sb.WriteString("FILE,material.stacks\r\n")
+	sb.WriteString("PANELYPE,1\r\n")
+	sb.WriteString("\r\n")
+
+	// Include PHead column in stacks format
+	sb.WriteString("Table,No.,ID,PHead,DeltX,DeltY,FeedRates,Note,Height,Speed,Status,nPixSizeX,nPixSizeY,HeightTake,DelayTake,nPullStripSpeed,nThreshold,nVisualRadio\r\n")
+
+	idx := 0
+	for _, s := range xf.Stations {
+		if s.DNP {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("Station,%d,%d,%d,%.2f,%.2f,%d,%s,%.2f,%d,%d,%d,%d,%.2f,%d,%d,%d,%d\r\n",
+			idx, s.ID, s.PHead, s.DeltX, s.DeltY, s.FeedRates, stackCsvEscape(s.Note),
+			s.Height, s.Speed, s.Status, s.NPixSizeX, s.NPixSizeY,
+			s.HeightTake, s.DelayTake, s.NPullStripSpeed, s.NThreshold, s.NVisualRadio))
+		idx++
+	}
+
+	return sb.String()
+}
+
+// MergeStacksFile parses a .stacks file and merges into XFile
+// Returns (merged count, added count, error)
+func MergeStacksFile(xf *XFile, content string) (int, int, error) {
+	stations, err := ParseStack(strings.NewReader(content))
+	if err != nil {
+		return 0, 0, err
+	}
+
+	merged := 0
+	added := 0
+
+	// Create map of existing stations by Note
+	noteToIdx := make(map[string]int)
+	for i, s := range xf.Stations {
+		if s.Note != "" {
+			noteToIdx[s.Note] = i
+		}
+	}
+
+	// Merge incoming stations
+	for _, incoming := range stations {
+		if idx, ok := noteToIdx[incoming.Note]; ok {
+			// Update existing station (preserve ID to maintain component links)
+			existingID := xf.Stations[idx].ID
+			existingNo := xf.Stations[idx].No
+			xf.Stations[idx] = incoming
+			xf.Stations[idx].ID = existingID
+			xf.Stations[idx].No = existingNo
+			merged++
+		} else {
+			// Add new station with next available ID
+			maxID := 0
+			for _, s := range xf.Stations {
+				if s.ID > maxID {
+					maxID = s.ID
+				}
+			}
+			incoming.ID = maxID + 1
+			incoming.No = len(xf.Stations)
+			xf.Stations = append(xf.Stations, incoming)
+			added++
+		}
+	}
+
+	// Re-derive component STNo. based on updated Station Notes
+	rederiveComponentSTNo(xf)
+
+	return merged, added, nil
+}
+
+// stackCsvEscape escapes a string for CSV output
+func stackCsvEscape(s string) string {
+	if strings.ContainsAny(s, ",\"\r\n") {
+		return "\"" + strings.ReplaceAll(s, "\"", "\"\"") + "\""
+	}
+	return s
 }

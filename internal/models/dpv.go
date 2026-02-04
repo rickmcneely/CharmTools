@@ -455,11 +455,15 @@ func GenerateReadme(xf *XFile, filename string) string {
 	if idx := len(baseName) - 4; idx > 0 && baseName[idx:] == ".dpv" {
 		baseName = baseName[:idx]
 	}
-	sb.WriteString(fmt.Sprintf("- %s.dpv   : DPV file for the machine\r\n", baseName))
-	sb.WriteString(fmt.Sprintf("- %s.stack : Material Stack backup (with PHead)\r\n", baseName))
-	sb.WriteString(fmt.Sprintf("- %s.pos   : Original POS file\r\n", baseName))
-	sb.WriteString(fmt.Sprintf("- %s.log   : Session log\r\n", baseName))
-	sb.WriteString("- README.txt  : This file\r\n")
+	sb.WriteString(fmt.Sprintf("- %s.dpv      : DPV file for the machine\r\n", baseName))
+	sb.WriteString(fmt.Sprintf("- %s.stack    : Material Stack backup (with PHead)\r\n", baseName))
+	sb.WriteString(fmt.Sprintf("- %s.pos      : Original POS file\r\n", baseName))
+	sb.WriteString(fmt.Sprintf("- %s.log      : Session log\r\n", baseName))
+	sb.WriteString("- material.stacks : Calibrated feeder positions (reusable)\r\n")
+	sb.WriteString("- README.txt      : This file\r\n")
+	sb.WriteString("\r\n")
+	sb.WriteString("TIP: Import material.stacks into future projects to reuse\r\n")
+	sb.WriteString("     your calibrated feeder positions.\r\n")
 	sb.WriteString("\r\n")
 
 	sb.WriteString("SUMMARY:\r\n")
