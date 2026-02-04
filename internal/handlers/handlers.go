@@ -343,6 +343,18 @@ func (h *Handler) Export(w http.ResponseWriter, r *http.Request) {
 	}
 	io.WriteString(stackWriter, stackContent)
 
+	// Add original POS file
+	if len(xf.POSRows) > 0 {
+		posFilename := baseName + ".pos"
+		posContent := models.GeneratePOS(xf)
+		posWriter, err := zipWriter.Create(posFilename)
+		if err != nil {
+			http.Error(w, "Failed to create ZIP", http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(posWriter, posContent)
+	}
+
 	// Add Log file if provided
 	if logContent != "" {
 		logFilename := baseName + ".log"

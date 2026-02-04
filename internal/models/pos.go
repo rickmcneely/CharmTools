@@ -393,3 +393,23 @@ func ConvertPOSToXFile(pos *POSData, filename string) *XFile {
 
 	return xf
 }
+
+// GeneratePOS generates a KiCad-style POS file from XFile POSRows
+func GeneratePOS(xf *XFile) string {
+	var sb strings.Builder
+
+	// Write header line
+	sb.WriteString("# Ref Val Package PosX PosY Rot Side\r\n")
+
+	// Write data rows
+	for _, row := range xf.POSRows {
+		side := row.Side
+		if side == "" {
+			side = "top"
+		}
+		sb.WriteString(fmt.Sprintf("%s %s %s %.4f %.4f %.4f %s\r\n",
+			row.Ref, row.Val, row.Package, row.PosX, row.PosY, row.Rot, side))
+	}
+
+	return sb.String()
+}
