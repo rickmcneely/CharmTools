@@ -145,15 +145,26 @@ func parseStationRow(header, row []string) XStation {
 	s.Height = getFloat("height", 0.5)
 	s.Speed = getInt("speed", 0)
 	s.Status = getInt("status", 4)
-	s.NPixSizeX = getInt("npixsizex", 0)
-	s.NPixSizeY = getInt("npixsizey", 0)
+
+	// Support both V0 (SizeX/SizeY) and V1 (nPixSizeX/nPixSizeY) formats
+	if v := getInt("npixsizex", -1); v >= 0 {
+		s.NPixSizeX = v
+	} else {
+		s.NPixSizeX = getInt("sizex", 0)
+	}
+	if v := getInt("npixsizey", -1); v >= 0 {
+		s.NPixSizeY = v
+	} else {
+		s.NPixSizeY = getInt("sizey", 0)
+	}
+
 	s.HeightTake = getFloat("heighttake", 0)
 	s.DelayTake = getInt("delaytake", 10)
 	s.NPullStripSpeed = getInt("npullstripspeed", 85)
 	s.NThreshold = getInt("nthreshold", 110)
 	s.NVisualRadio = getInt("nvisualradio", 200)
 
-	// Extended field: PHead (if present in custom stack format)
+	// Extended field: PHead (if present in custom stack format, default to 1)
 	s.PHead = getInt("phead", 1)
 
 	return s
