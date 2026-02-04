@@ -46,7 +46,7 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 
 	// === STATION TABLE VALIDATION ===
 
-	// Check Station IDs are unique
+	// Check Station IDs are unique and within valid range
 	stationIDs := make(map[int]bool)
 	for i, s := range activeStations {
 		if stationIDs[s.ID] {
@@ -59,6 +59,27 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 			result.Valid = false
 		}
 		stationIDs[s.ID] = true
+
+		// Station IDs >= 100 are reserved for machine configuration and will cause head crashes
+		if s.ID >= 100 {
+			result.Errors = append(result.Errors, DPVValidationError{
+				Type:    "reserved_station_id",
+				Field:   "Station.ID",
+				Row:     i,
+				Message: fmt.Sprintf("Station ID %d is reserved (IDs >= 100 are machine-reserved and will cause head crashes)", s.ID),
+			})
+			result.Valid = false
+		}
+
+		// Check for IDs in undefined ranges (30-35, 65-70)
+		if (s.ID >= 30 && s.ID <= 35) || (s.ID >= 65 && s.ID <= 70) {
+			result.Warnings = append(result.Warnings, DPVValidationError{
+				Type:    "undefined_station_id",
+				Field:   "Station.ID",
+				Row:     i,
+				Message: fmt.Sprintf("Station ID %d is in an undefined range (valid: 1-29 left reels, 36-64 right reels, 71-84 front tray, 85-90 vibratory, 91-99 IC trays)", s.ID),
+			})
+		}
 	}
 
 	// Check Station No. is sequential (0 to N-1)
@@ -95,6 +116,45 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 				Row:     i,
 				Message: fmt.Sprintf("Station FeedRates %d is unusual (typically 2, 4, or 8)", s.FeedRates),
 			})
+		}
+	}
+
+	// Check Station Speed (must be 0 or >= 50, where 0 means 100%)
+	for i, s := range activeStations {
+		if s.Speed != 0 && s.Speed < 50 {
+			result.Errors = append(result.Errors, DPVValidationError{
+				Type:    "invalid_station_speed",
+				Field:   "Station.Speed",
+				Row:     i,
+				Message: fmt.Sprintf("Station Speed %d is invalid (must be 0 for 100%%, or 50-100)", s.Speed),
+			})
+			result.Valid = false
+		}
+	}
+
+	// Check Station PHead (must be 1 or 2)
+	for i, s := range activeStations {
+		if s.PHead != 1 && s.PHead != 2 {
+			result.Errors = append(result.Errors, DPVValidationError{
+				Type:    "invalid_station_phead",
+				Field:   "Station.PHead",
+				Row:     i,
+				Message: fmt.Sprintf("Station PHead %d must be 1 (left nozzle) or 2 (right nozzle)", s.PHead),
+			})
+			result.Valid = false
+		}
+	}
+
+	// Check Station nThreshold (must be 0 or 1-256)
+	for i, s := range activeStations {
+		if s.NThreshold != 0 && (s.NThreshold < 1 || s.NThreshold > 256) {
+			result.Errors = append(result.Errors, DPVValidationError{
+				Type:    "invalid_threshold",
+				Field:   "Station.nThreshold",
+				Row:     i,
+				Message: fmt.Sprintf("Station nThreshold %d is invalid (must be 0 for default, or 1-256)", s.NThreshold),
+			})
+			result.Valid = false
 		}
 	}
 
@@ -227,6 +287,28 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 		}
 	}
 
+	// Check Component Speed (must be 0 or >= 50, where 0 means 100%)
+	for i, c := range activeComponents {
+		if c.Speed != 0 && c.Speed < 50 {
+			result.Errors = append(result.Errors, DPVValidationError{
+				Type:    "invalid_component_speed",
+				Field:   "EComponent.Speed",
+				Row:     i,
+				Message: fmt.Sprintf("Component Speed %d is invalid (must be 0 for 100%%, or 50-100)", c.Speed),
+			})
+			result.Valid = false
+		}
+	}
+
+	// Machine bug: Need at least 2 EComponent rows for 3-point calibration to work
+	if len(activeComponents) == 1 {
+		result.Warnings = append(result.Warnings, DPVValidationError{
+			Type:    "single_component",
+			Field:   "EComponent",
+			Message: "Only 1 component defined - machine requires at least 2 components for LR fiducial calibration to work (known bug)",
+		})
+	}
+
 	// Check Component Height matches Station Height
 	for i, c := range activeComponents {
 		for _, s := range activeStations {
@@ -243,7 +325,15 @@ func ValidateDPV(xf *XFile, filename string) *DPVValidationResult {
 	}
 
 	// === PANEL_ARRAY VALIDATION ===
-	if len(xf.PanelArray) > 0 {
+	// Panel_Array is REQUIRED - machine won't allow PCB calibration without it
+	if len(xf.PanelArray) == 0 {
+		result.Errors = append(result.Errors, DPVValidationError{
+			Type:    "missing_panel_array",
+			Field:   "Panel_Array",
+			Message: "Panel_Array table is required - machine won't allow PCB calibration without it",
+		})
+		result.Valid = false
+	} else {
 		pa := xf.PanelArray[0]
 		if pa.NumX < 1 || pa.NumY < 1 {
 			result.Errors = append(result.Errors, DPVValidationError{
