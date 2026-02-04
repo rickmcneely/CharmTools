@@ -64,9 +64,20 @@ Supports two formats:
 ## DPV Format Notes
 
 Reference: `/home/zditech/CHWebApp/DPVFileFormat.txt`
+Machine Manual: `C:\Users\mcnee\OneDrive\Documents\CharmHigh\chm-t48vb user manual - charmhigh.pdf`
 
 - PANELYPE=1 is current format (V1)
 - No. fields must be sequential 0 to N-1 (auto-renumbered on export)
 - FILE header must match actual filename exactly
 - PHead in EComponent must be position 3 (after ID, before STNo)
 - Coordinates are in millimeters, angles in degrees (-180 to 180)
+- Panel_Array table is REQUIRED - machine won't allow PCB calibration without it
+- Station DeltX/DeltY of 0,0 means feeders need calibration on machine
+- Skip flags are auto-resolved to match Station Status on export
+
+## TODO
+
+- [ ] **Material Stack Import**: Add function to import calibrated .stack files
+  - Merge imported Station coordinates (DeltX/DeltY) into current XFile
+  - Match by Station.Note (component value)
+  - Preserve user's feeder calibration across projects
