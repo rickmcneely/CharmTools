@@ -77,7 +77,8 @@ Machine Manual: `C:\Users\mcnee\OneDrive\Documents\CharmHigh\chm-t48vb user manu
 
 ## TODO
 
-- [ ] **Material Stack Import**: Add function to import calibrated .stack files
-  - Merge imported Station coordinates (DeltX/DeltY) into current XFile
-  - Match by Station.Note (component value)
-  - Preserve user's feeder calibration across projects
+- [x] **Material Stack Import/Export**: Import/export calibrated .stacks files
+  - Import/Export buttons on Material Stacks tab
+  - File extension: .stacks, default name: material.stacks
+  - Merge by Station.Note (component value)
+  - Export package includes material.stacks for reuse
