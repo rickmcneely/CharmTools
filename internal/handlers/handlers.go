@@ -366,6 +366,15 @@ func (h *Handler) Export(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(logWriter, logContent)
 	}
 
+	// Add README.txt with setup instructions
+	readmeContent := models.GenerateReadme(xf, dpvFilename)
+	readmeWriter, err := zipWriter.Create("README.txt")
+	if err != nil {
+		http.Error(w, "Failed to create ZIP", http.StatusInternalServerError)
+		return
+	}
+	io.WriteString(readmeWriter, readmeContent)
+
 	if err := zipWriter.Close(); err != nil {
 		http.Error(w, "Failed to finalize ZIP", http.StatusInternalServerError)
 		return

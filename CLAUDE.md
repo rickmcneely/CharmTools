@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 CharmTool Web converts KiCad POS placement files to Charmhigh CHMT-48VB pick-and-place machine DPV format. It's a Go backend with a single-page HTML/JS frontend.
+A reference PDF for the Charmhigh CHM-T48VB PnP can be found at: https://www.bing.com/ck/a?!&&p=a0f122506dcdc1fc3097ee2f39f292b4b1f960310265afcb35768ecf7d496e7fJmltdHM9MTc3MDA3NjgwMA&ptn=3&ver=2&hsh=4&fclid=0ad16d54-bfaf-666a-0ffb-7b36bec06798&psq=find+the+Charmhigh+CHM-T48VB+user+manual+pdf+on+the+manufacturers+website&u=a1aHR0cHM6Ly93d3cuY2hhcm1oaWdoLXNtdC5jb20vZmlsZS9kYXRhc2hlZXQvMzZ2YSUyQyUyMDQ4dmElMkMlMjA0OHZiJTIwLSUyMGVuZ2xpc2glMjBtYW51YWwucGRm
 
 ## Build and Run
 
