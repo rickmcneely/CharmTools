@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CharmTool</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-color: #2d3748;
+      --panel-bg: #3d4a5c;
+      --header-bg: #4a5568;
+      --accent: #63b3ed;
+      --text: #e2e8f0;
+      --text-muted: #a0aec0;
+      --border: #4a5568;
+      --table-row-alt: #353f4f;
+      --table-hover: #4a5a6e;
+      --dnp-row: #553c3c;
+      --select-row: #3c5548;
+      --console-bg: #1a202c;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg-color);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Row 1 - Title */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .header-copyright {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Toolbar Row 2 */
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-btn {
+      padding: 8px 16px;
+      background: var(--header-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--accent);
+    }
+
+    .toolbar-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .toolbar-btn.active {
+      background: var(--accent);
+    }
+
+    .offset-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .offset-group label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .offset-input {
+      width: 80px;
+      padding: 6px 8px;
+      background: var(--bg-color);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* Tab Navigation Row 3 */
+    .tab-row {
+      display: flex;
+      background: var(--panel-bg);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(233, 69, 96, 0.1);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    .tab-content {
+      display: none;
+      height: 100%;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow: auto;
+      max-height: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--header-bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background: var(--table-row-alt);
+    }
+
+    tr:hover {
+      background: var(--table-hover);
+    }
+
+    tr.selected {
+      background: var(--select-row) !important;
+    }
+
+    tr.dnp-row {
+      background: var(--dnp-row) !important;
+      opacity: 0.7;
+    }
+
+    td[contenteditable="true"] {
+      cursor: text;
+    }
+
+    td[contenteditable="true"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+
+    .cell-editable {
+      cursor: pointer;
+    }
+
+    .cell-editable:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      background: var(--table-hover);
+    }
+
+    .cell-editable.editing {
+      background: #fff;
+      color: #000;
+      cursor: text;
+    }
+
+    .cell-toggle {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell-toggle:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      background: var(--table-hover);
+    }
+
+    .cell-toggle:hover {
+      background: var(--table-hover);
+    }
+
+    .cell-readonly {
+      color: var(--text-muted);
+    }
+
+    /* Sort buttons */
+    .sortable-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .sort-btns {
+      display: flex;
+      flex-direction: column;
+      font-size: 8px;
+      line-height: 1;
+    }
+
+    .sort-btn {
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0 2px;
+      user-select: none;
+    }
+
+    .sort-btn:hover {
+      color: var(--accent);
+    }
+
+    .sort-btn.active {
+      color: var(--accent);
+    }
+
+    .select-col {
+      width: 40px;
+      text-align: center;
+    }
+
+    .select-col input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Action Bar (for tables with selection) */
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: var(--panel-bg);
+      border-radius: 4px;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      background: var(--header-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .action-btn:hover {
+      background: var(--accent);
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* Console Panel */
+    .console-panel {
+      display: none;
+      flex-direction: column;
+      background: var(--console-bg);
+      border-top: 2px solid var(--border);
+      min-height: 100px;
+      max-height: 40vh;
+      height: 150px;
+    }
+
+    .console-panel.visible {
+      display: flex;
+    }
+
+    .console-resize-handle {
+      height: 4px;
+      background: var(--border);
+      cursor: ns-resize;
+    }
+
+    .console-resize-handle:hover {
+      background: var(--accent);
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 12px;
+      background: var(--header-bg);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .console-clear-btn {
+      padding: 2px 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .console-clear-btn:hover {
+      background: var(--accent);
+      color: var(--text);
+    }
+
+    .console-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 8px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .log-time {
+      color: var(--text-muted);
+      min-width: 80px;
+    }
+
+    .log-info { color: #8be9fd; }
+    .log-warn { color: #f1fa8c; }
+    .log-error { color: #ff5555; }
+    .log-debug { color: #bd93f9; }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 16px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Help content */
+    .help-section {
+      margin-bottom: 16px;
+    }
+
+    .help-section h3 {
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .help-section ul {
+      margin-left: 20px;
+    }
+
+    .help-section li {
+      margin: 4px 0;
+      color: var(--text-muted);
+    }
+
+    /* Getting Started */
+    .workflow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 12px 0;
+      padding: 12px;
+      background: var(--bg-color);
+      border-radius: 4px;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Hidden file inputs */
+    .hidden-input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Row 1 -->
+  <div class="header-row">
+    <div class="header-title">CharmTool</div>
+    <div class="header-copyright">Copyright 2026 Rick McNeely. V0.1b</div>
+  </div>
+
+  <!-- Toolbar Row 2 -->
+  <div class="toolbar-row">
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="btn-load-pos">Load POS</button>
+      <button class="toolbar-btn" id="btn-load-stack">Load Stack</button>
+      <button class="toolbar-btn" id="btn-export">Export DPV</button>
+    </div>
+    <div class="toolbar-group offset-group">
+      <label>X Offset:</label>
+      <input type="number" class="offset-input" id="offset-x" value="0" step="0.1">
+      <label>Y Offset:</label>
+      <input type="number" class="offset-input" id="offset-y" value="0" step="0.1">
+    </div>
+    <div class="toolbar-group">
+      <button class="toolbar-btn" id="btn-getting-started">Getting Started</button>
+      <button class="toolbar-btn" id="btn-console">Console</button>
+      <button class="toolbar-btn" id="btn-help">Help</button>
+    </div>
+  </div>
+
+  <!-- Tab Row 3 -->
+  <div class="tab-row">
+    <button class="tab-btn active" data-tab="pos">POS</button>
+    <button class="tab-btn" data-tab="stacks">Material Stacks</button>
+    <button class="tab-btn" data-tab="panel">Panel List</button>
+    <button class="tab-btn" data-tab="components">Components</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- POS Tab -->
+    <div class="tab-content active" id="tab-pos">
+      <div class="empty-state" id="pos-empty">
+        <div class="empty-state-icon">📄</div>
+        <p>No POS file loaded</p>
+        <p style="font-size: 12px; margin-top: 8px;">Click "Load POS" to load a KiCad placement file</p>
+      </div>
+      <div class="table-container" id="pos-table-container" style="display: none;">
+        <table id="table-pos">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Components Tab -->
+    <div class="tab-content" id="tab-components">
+      <div class="action-bar">
+        <button class="action-btn" id="btn-select-all-comp">Select All</button>
+        <button class="action-btn" id="btn-deselect-all-comp">Deselect All</button>
+        <button class="action-btn" id="btn-toggle-dnp-comp">Toggle DNP</button>
+        <button class="action-btn" id="btn-delete-selected-comp">Delete Selected</button>
+      </div>
+      <div class="table-container">
+        <table id="table-components">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Material Stacks Tab -->
+    <div class="tab-content" id="tab-stacks">
+      <div class="action-bar">
+        <button class="action-btn" id="btn-select-all-stack">Select All</button>
+        <button class="action-btn" id="btn-deselect-all-stack">Deselect All</button>
+        <button class="action-btn" id="btn-toggle-head-stack">Toggle Head</button>
+        <button class="action-btn" id="btn-toggle-dnp-stack">Toggle DNP</button>
+        <button class="action-btn" id="btn-delete-selected-stack">Delete Selected</button>
+      </div>
+      <div class="table-container">
+        <table id="table-stacks">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panel List Tab -->
+    <div class="tab-content" id="tab-panel">
+      <h3 style="margin-bottom: 12px;">Panel Array</h3>
+      <div class="table-container" style="margin-bottom: 24px;">
+        <table id="table-panel-array">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <h3 style="margin-bottom: 12px;">Panel Coordinates</h3>
+      <div class="table-container">
+        <table id="table-panel-coord">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Console Panel -->
+  <div class="console-panel" id="console-panel">
+    <div class="console-resize-handle" id="console-resize"></div>
+    <div class="console-header">
+      <span>Console</span>
+      <div>
+        <button class="console-clear-btn" id="btn-console-copy">Copy</button>
+        <button class="console-clear-btn" id="btn-console-clear">Clear</button>
+      </div>
+    </div>
+    <div class="console-output" id="console-output"></div>
+  </div>
+
+  <!-- Hidden File Inputs -->
+  <input type="file" class="hidden-input" id="file-input-pos" accept=".pos,.csv">
+  <input type="file" class="hidden-input" id="file-input-stack" accept=".stack,.dpv">
+
+  <!-- Getting Started Modal -->
+  <div class="modal-overlay" id="modal-getting-started">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Getting Started</div>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="workflow-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Load KiCad POS File</h4>
+            <p>Click "Load POS" and select your KiCad placement export file (.pos or .csv). This will populate the Components and Material Stacks tables.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Load Stack File (Optional)</h4>
+            <p>If you have saved feeder configurations, click "Load Stack" to merge them with your current data.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Configure Material Stacks</h4>
+            <p>Go to Material Stacks tab. Set feeder IDs, pocket offsets, visual parameters, and PHead (nozzle) assignments.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Review Components</h4>
+            <p>Check the Components tab. Mark any components as DNP (Do Not Place) if needed. Verify coordinates and angles.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Set Global Offsets</h4>
+            <p>If your board origin differs from the machine origin, set X/Y offsets in the toolbar.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number">6</div>
+          <div class="step-content">
+            <h4>Export DPV</h4>
+            <p>Click "Export DPV" to download a ZIP containing your DPV file and Stack backup. The file will be validated before export.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="toolbar-btn" data-close>Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="modal-help">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Help</div>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-section">
+          <h3>File Formats</h3>
+          <ul>
+            <li><strong>POS/CSV:</strong> KiCad placement export (Ref, Val, Package, PosX, PosY, Rot)</li>
+            <li><strong>STACK:</strong> Saved Material Stack configuration with all feeder parameters</li>
+            <li><strong>DPV:</strong> Charmhigh CHMT-48VB pick-and-place format</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>Key Columns</h3>
+          <ul>
+            <li><strong>STNo.:</strong> Links components to material stacks by Station ID</li>
+            <li><strong>PHead:</strong> Nozzle number (1 or 2)</li>
+            <li><strong>Skip:</strong> Flags: 0=place, 1=skip, 4=vision assist</li>
+            <li><strong>Status:</strong> Station flags: 1=skip, 2=vacuum, 4=vision, 8=pause on empty</li>
+            <li><strong>DNP:</strong> Do Not Place - excludes from DPV export</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>Editing</h3>
+          <ul>
+            <li>Click any cell to edit (except STNo. which is derived from Station)</li>
+            <li>Use checkbox column to select multiple rows</li>
+            <li>Changes auto-save to the server session</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h3>Validation</h3>
+          <ul>
+            <li>DPV is validated before export per machine specification</li>
+            <li>Errors must be fixed before export is allowed</li>
+            <li>Check Console for validation messages</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="toolbar-btn" data-close>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Filename Modal -->
+  <div class="modal-overlay" id="modal-export">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">Export DPV</div>
+        <button class="modal-close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Output filename (without extension):</label>
+          <input type="text" id="export-filename" style="width: 100%; padding: 8px 12px; background: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px;">
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted);">A ZIP file will be created containing:<br>• {filename}.dpv - DPV file for the machine<br>• {filename}.stack - Material stack backup<br>• {filename}.log - Session log</p>
+      </div>
+      <div class="modal-footer">
+        <button class="toolbar-btn" data-close style="margin-right: 8px;">Cancel</button>
+        <button class="toolbar-btn" id="btn-export-confirm" style="background: var(--accent);">Export</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Application state
+    const APP = {
+      xfile: null,
+      posData: null,
+      saveTimeout: null,
+      logHistory: []
+    };
+
+    // Console logging
+    function log(message, level = 'info') {
+      const output = document.getElementById('console-output');
+      const now = new Date();
+      const time = now.toLocaleTimeString();
+      const timestamp = now.toISOString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-time">${time}</span><span class="log-${level}">${escapeHtml(message)}</span>`;
+      output.appendChild(entry);
+      output.scrollTop = output.scrollHeight;
+      // Store in history for export
+      APP.logHistory.push({ timestamp, level, message });
+      console.log(`[${level.toUpperCase()}] ${message}`);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // API functions
+    async function api(endpoint, options = {}) {
+      try {
+        const response = await fetch(endpoint, options);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `HTTP ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+        }
+        return response;
+      } catch (err) {
+        log(`API error: ${err.message}`, 'error');
+        throw err;
+      }
+    }
+
+    async function loadXFile() {
+      try {
+        APP.xfile = await api('/api/xfile');
+        log('Session loaded', 'debug');
+        updateOffsetInputs();
+        renderAllTables();
+      } catch (err) {
+        log('Failed to load session', 'error');
+      }
+    }
+
+    async function saveXFile() {
+      if (!APP.xfile) return;
+      try {
+        await api('/api/xfile/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(APP.xfile)
+        });
+        log('Changes saved', 'debug');
+      } catch (err) {
+        log('Failed to save changes', 'error');
+      }
+    }
+
+    function scheduleSave() {
+      if (APP.saveTimeout) clearTimeout(APP.saveTimeout);
+      APP.saveTimeout = setTimeout(saveXFile, 500);
+    }
+
+    // File upload
+    async function uploadPOS(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const result = await api('/api/upload/pos', {
+          method: 'POST',
+          body: formData
+        });
+        log(`Loaded ${result.filename}: ${result.components} components, ${result.stations} stations`, 'info');
+        await loadXFile();
+        document.getElementById('pos-empty').style.display = 'none';
+        document.getElementById('pos-table-container').style.display = 'block';
+      } catch (err) {
+        log(`Failed to upload POS: ${err.message}`, 'error');
+      }
+    }
+
+    async function uploadStack(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const result = await api('/api/upload/stack', {
+          method: 'POST',
+          body: formData
+        });
+        log(`Merged ${result.filename}: ${result.merged} stations updated, ${result.total} total`, 'info');
+        await loadXFile();
+      } catch (err) {
+        log(`Failed to upload Stack: ${err.message}`, 'error');
+      }
+    }
+
+    async function exportDPV() {
+      if (!APP.xfile || APP.xfile.components.length === 0) {
+        log('No data to export', 'warn');
+        return;
+      }
+
+      // First validate
+      try {
+        const validation = await api('/api/validate');
+        if (!validation.valid) {
+          log('Validation failed:', 'error');
+          validation.errors.forEach(e => log(`  ERROR: ${e.message}`, 'error'));
+          validation.warnings.forEach(w => log(`  WARNING: ${w.message}`, 'warn'));
+          alert('DPV validation failed. Check Console for details.');
+          return;
+        }
+        if (validation.warnings.length > 0) {
+          validation.warnings.forEach(w => log(`WARNING: ${w.message}`, 'warn'));
+        }
+      } catch (err) {
+        log(`Validation error: ${err.message}`, 'error');
+        return;
+      }
+
+      // Show filename prompt modal
+      const modal = document.getElementById('modal-export');
+      const filenameInput = document.getElementById('export-filename');
+
+      // Default filename from original POS file
+      let defaultName = APP.xfile.originalPOS || 'output';
+      defaultName = defaultName.replace(/\.[^.]+$/, ''); // Remove extension
+      filenameInput.value = defaultName;
+
+      modal.classList.add('visible');
+      filenameInput.focus();
+      filenameInput.select();
+    }
+
+    async function doExport(filename) {
+      log(`Starting export: ${filename}`, 'info');
+
+      // Build log content
+      const logContent = APP.logHistory.map(entry =>
+        `${entry.timestamp} [${entry.level.toUpperCase()}] ${entry.message}`
+      ).join('\n');
+
+      // Export via POST with log data
+      try {
+        const response = await fetch(`/api/export?filename=${encodeURIComponent(filename)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ log: logContent })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          if (data.validation) {
+            log('Export failed - validation errors:', 'error');
+            data.validation.errors.forEach(e => log(`  ${e.message}`, 'error'));
+          } else {
+            log(`Export failed: ${data.message || 'Unknown error'}`, 'error');
+          }
+          return;
+        }
+
+        const blob = await response.blob();
+        const zipFilename = response.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || 'output.zip';
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = zipFilename;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        log(`Exported ${zipFilename}`, 'info');
+      } catch (err) {
+        log(`Export error: ${err.message}`, 'error');
+      }
+    }
+
+    // Table rendering
+    function renderAllTables() {
+      if (!APP.xfile) return;
+      // Clear all selections on refresh/reload
+      clearAllSelections();
+      renderPOSTable();
+      renderComponentsTable();
+      renderStacksTable();
+      renderPanelTables();
+    }
+
+    function clearAllSelections() {
+      if (!APP.xfile) return;
+      if (APP.xfile.components) {
+        APP.xfile.components.forEach(c => c.select = false);
+      }
+      if (APP.xfile.stations) {
+        APP.xfile.stations.forEach(s => s.select = false);
+      }
+    }
+
+    function renderPOSTable() {
+      if (!APP.xfile || !APP.xfile.posRows || APP.xfile.posRows.length === 0) return;
+
+      const table = document.getElementById('table-pos');
+      const headers = ['Ref', 'Val', 'Package', 'PosX', 'PosY', 'Rot', 'Side'];
+
+      table.innerHTML = `
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody></tbody>
+      `;
+
+      const tbody = table.querySelector('tbody');
+      APP.xfile.posRows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(row.ref)}</td>
+          <td>${escapeHtml(row.val)}</td>
+          <td>${escapeHtml(row.package)}</td>
+          <td>${row.posx.toFixed(2)}</td>
+          <td>${row.posy.toFixed(2)}</td>
+          <td>${row.rot.toFixed(2)}</td>
+          <td>${escapeHtml(row.side || '')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('pos-empty').style.display = 'none';
+      document.getElementById('pos-table-container').style.display = 'block';
+    }
+
+    // Track currently editing cell
+    let activeEditCell = null;
+
+    // Track current sort state for components table
+    let componentsSortField = null;
+    let componentsSortAsc = true;
+
+    function renderComponentsTable() {
+      if (!APP.xfile) return;
+      // Clear component selections on render
+      APP.xfile.components.forEach(c => c.select = false);
+
+      const table = document.getElementById('table-components');
+      const headers = [
+        { label: 'Select', field: null },
+        { label: 'No.', field: 'no' },
+        { label: 'ID', field: 'id' },
+        { label: 'STNo.', field: 'stno' },
+        { label: 'PHead', field: 'phead' },
+        { label: 'DeltX', field: 'deltx' },
+        { label: 'DeltY', field: 'delty' },
+        { label: 'Angle', field: 'angle' },
+        { label: 'Height', field: 'height' },
+        { label: 'Skip', field: 'skip' },
+        { label: 'Speed', field: 'speed' },
+        { label: 'DNP', field: 'dnp' },
+        { label: 'Explain', field: 'explain' },
+        { label: 'Note', field: 'note' },
+        { label: 'Delay', field: 'delay' }
+      ];
+      // Toggle fields: double-click to toggle, not editable
+      const toggleFields = ['phead', 'stno', 'dnp'];
+      // Editable fields: double-click or Enter to edit
+      const editableFields = ['id', 'deltx', 'delty', 'angle', 'height', 'skip', 'speed', 'explain', 'note', 'delay'];
+
+      const headerHtml = headers.map((h, i) => {
+        if (i === 0) {
+          return '<th class="select-col"><input type="checkbox" id="select-all-comp-cb"></th>';
+        }
+        const isActive = componentsSortField === h.field;
+        return `<th>
+          <div class="sortable-header">
+            <span>${h.label}</span>
+            <div class="sort-btns">
+              <span class="sort-btn ${isActive && componentsSortAsc ? 'active' : ''}" data-field="${h.field}" data-dir="asc">&#9650;</span>
+              <span class="sort-btn ${isActive && !componentsSortAsc ? 'active' : ''}" data-field="${h.field}" data-dir="desc">&#9660;</span>
+            </div>
+          </div>
+        </th>`;
+      }).join('');
+
+      table.innerHTML = `<thead><tr>${headerHtml}</tr></thead><tbody></tbody>`;
+
+      const tbody = table.querySelector('tbody');
+      APP.xfile.components.forEach((comp, idx) => {
+        const tr = document.createElement('tr');
+        tr.dataset.index = idx;
+        if (comp.select) tr.classList.add('selected');
+        if (comp.dnp) tr.classList.add('dnp-row');
+
+        tr.innerHTML = `
+          <td class="select-col"><input type="checkbox" class="row-select" ${comp.select ? 'checked' : ''}></td>
+          <td class="cell-readonly">${comp.no}</td>
+          <td class="cell-editable" data-field="id" tabindex="0">${comp.id}</td>
+          <td class="cell-toggle" data-field="stno" tabindex="0">${comp.stno}</td>
+          <td class="cell-toggle" data-field="phead" tabindex="0">${comp.phead}</td>
+          <td class="cell-editable" data-field="deltx" tabindex="0">${comp.deltx.toFixed(2)}</td>
+          <td class="cell-editable" data-field="delty" tabindex="0">${comp.delty.toFixed(2)}</td>
+          <td class="cell-editable" data-field="angle" tabindex="0">${comp.angle.toFixed(2)}</td>
+          <td class="cell-editable" data-field="height" tabindex="0">${comp.height.toFixed(2)}</td>
+          <td class="cell-editable" data-field="skip" tabindex="0">${comp.skip}</td>
+          <td class="cell-editable" data-field="speed" tabindex="0">${comp.speed}</td>
+          <td class="cell-toggle" data-field="dnp" tabindex="0">${comp.dnp ? 'Yes' : 'No'}</td>
+          <td class="cell-editable" data-field="explain" tabindex="0">${escapeHtml(comp.explain)}</td>
+          <td class="cell-editable" data-field="note" tabindex="0">${escapeHtml(comp.note)}</td>
+          <td class="cell-editable" data-field="delay" tabindex="0">${comp.delay}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Select all checkbox
+      document.getElementById('select-all-comp-cb').addEventListener('change', (e) => {
+        toggleSelectAll('components', e.target.checked);
+      });
+
+      // Row select checkboxes
+      tbody.querySelectorAll('.row-select').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.closest('tr').dataset.index);
+          APP.xfile.components[idx].select = e.target.checked;
+          e.target.closest('tr').classList.toggle('selected', e.target.checked);
+        });
+      });
+
+      // Toggle cells (PHead, STNo, DNP) - double-click to toggle
+      tbody.querySelectorAll('.cell-toggle').forEach(cell => {
+        cell.addEventListener('dblclick', (e) => {
+          handleComponentToggle(e.target);
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleComponentToggle(e.target);
+          } else {
+            handleCellNavigation(e, 'components');
+          }
+        });
+      });
+
+      // Editable cells - double-click or Enter to edit
+      tbody.querySelectorAll('.cell-editable').forEach(cell => {
+        cell.addEventListener('dblclick', (e) => {
+          startCellEdit(e.target);
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !cell.isContentEditable) {
+            e.preventDefault();
+            startCellEdit(e.target);
+          } else if (e.key === 'Enter' && cell.isContentEditable) {
+            e.preventDefault();
+            endCellEdit(e.target, 'components');
+          } else if (e.key === 'Escape' && cell.isContentEditable) {
+            e.preventDefault();
+            cancelCellEdit(e.target, 'components');
+          } else if (!cell.isContentEditable) {
+            handleCellNavigation(e, 'components');
+          }
+        });
+        cell.addEventListener('blur', (e) => {
+          if (cell.isContentEditable) {
+            endCellEdit(e.target, 'components');
+          }
+        });
+      });
+
+      // Sort button handlers
+      table.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const field = e.target.dataset.field;
+          const dir = e.target.dataset.dir;
+          sortComponentsTable(field, dir === 'asc');
+        });
+      });
+    }
+
+    function sortComponentsTable(field, asc) {
+      componentsSortField = field;
+      componentsSortAsc = asc;
+
+      APP.xfile.components.sort((a, b) => {
+        let valA = a[field];
+        let valB = b[field];
+
+        // Handle DNP as boolean
+        if (field === 'dnp') {
+          valA = valA ? 1 : 0;
+          valB = valB ? 1 : 0;
+        }
+
+        // Handle string comparison
+        if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
+          if (asc) {
+            return valA.localeCompare(valB);
+          } else {
+            return valB.localeCompare(valA);
+          }
+        }
+
+        // Numeric comparison
+        if (asc) {
+          return valA - valB;
+        } else {
+          return valB - valA;
+        }
+      });
+
+      // Update No. field to reflect new order
+      APP.xfile.components.forEach((c, i) => c.no = i);
+
+      renderComponentsTable();
+      scheduleSave();
+    }
+
+    function handleComponentToggle(cell) {
+      const tr = cell.closest('tr');
+      const idx = parseInt(tr.dataset.index);
+      const field = cell.dataset.field;
+      const comp = APP.xfile.components[idx];
+
+      if (field === 'phead') {
+        comp.phead = comp.phead === 1 ? 2 : 1;
+        cell.textContent = comp.phead;
+      } else if (field === 'stno') {
+        comp.stno = comp.stno === 1 ? 2 : 1;
+        cell.textContent = comp.stno;
+      } else if (field === 'dnp') {
+        comp.dnp = !comp.dnp;
+        cell.textContent = comp.dnp ? 'Yes' : 'No';
+        tr.classList.toggle('dnp-row', comp.dnp);
+      }
+      scheduleSave();
+    }
+
+    function startCellEdit(cell) {
+      if (activeEditCell && activeEditCell !== cell) {
+        endCellEdit(activeEditCell, 'components');
+      }
+      activeEditCell = cell;
+      cell.contentEditable = 'true';
+      cell.classList.add('editing');
+      cell.focus();
+      // Select all text
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function endCellEdit(cell, tableType) {
+      if (!cell.isContentEditable) return;
+      cell.contentEditable = 'false';
+      cell.classList.remove('editing');
+      activeEditCell = null;
+
+      const tr = cell.closest('tr');
+      const idx = parseInt(tr.dataset.index);
+      const field = cell.dataset.field;
+      const value = cell.textContent.trim();
+
+      if (tableType === 'components') {
+        updateComponentField(idx, field, value);
+      } else if (tableType === 'stacks') {
+        updateStationField(idx, field, value);
+      }
+    }
+
+    function cancelCellEdit(cell, tableType) {
+      cell.contentEditable = 'false';
+      cell.classList.remove('editing');
+      activeEditCell = null;
+      // Restore original value
+      const tr = cell.closest('tr');
+      const idx = parseInt(tr.dataset.index);
+      const field = cell.dataset.field;
+
+      let data = null;
+      if (tableType === 'components') {
+        data = APP.xfile.components[idx];
+      } else if (tableType === 'stacks') {
+        data = APP.xfile.stations[idx];
+      } else if (tableType === 'panelArray') {
+        data = APP.xfile.panelArray[idx];
+      } else if (tableType === 'panelCoord') {
+        data = APP.xfile.panelCoord[idx];
+      }
+
+      if (data && data[field] !== undefined) {
+        const val = data[field];
+        cell.textContent = typeof val === 'number' && !Number.isInteger(val) ? val.toFixed(2) : val;
+      }
+    }
+
+    function handleCellNavigation(e, tableType) {
+      const cell = e.target;
+      const tr = cell.closest('tr');
+      const tbody = tr.closest('tbody');
+      const cells = Array.from(tr.querySelectorAll('[tabindex="0"]'));
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const cellIdx = cells.indexOf(cell);
+      const rowIdx = rows.indexOf(tr);
+
+      let nextCell = null;
+
+      if (e.key === 'ArrowRight' || e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        if (cellIdx < cells.length - 1) {
+          nextCell = cells[cellIdx + 1];
+        } else if (rowIdx < rows.length - 1) {
+          const nextRow = rows[rowIdx + 1];
+          const nextCells = nextRow.querySelectorAll('[tabindex="0"]');
+          nextCell = nextCells[0];
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        if (cellIdx > 0) {
+          nextCell = cells[cellIdx - 1];
+        } else if (rowIdx > 0) {
+          const prevRow = rows[rowIdx - 1];
+          const prevCells = prevRow.querySelectorAll('[tabindex="0"]');
+          nextCell = prevCells[prevCells.length - 1];
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (rowIdx < rows.length - 1) {
+          const nextRow = rows[rowIdx + 1];
+          const nextCells = Array.from(nextRow.querySelectorAll('[tabindex="0"]'));
+          nextCell = nextCells[cellIdx] || nextCells[nextCells.length - 1];
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (rowIdx > 0) {
+          const prevRow = rows[rowIdx - 1];
+          const prevCells = Array.from(prevRow.querySelectorAll('[tabindex="0"]'));
+          nextCell = prevCells[cellIdx] || prevCells[prevCells.length - 1];
+        }
+      }
+
+      if (nextCell) {
+        nextCell.focus();
+      }
+    }
+
+    // Track current sort state for stacks table
+    let stacksSortField = null;
+    let stacksSortAsc = true;
+
+    function renderStacksTable() {
+      if (!APP.xfile) return;
+      // Clear station selections on render
+      APP.xfile.stations.forEach(s => s.select = false);
+
+      const table = document.getElementById('table-stacks');
+      const headers = [
+        { label: 'Select', field: null },
+        { label: 'No.', field: 'no' },
+        { label: 'ID', field: 'id' },
+        { label: 'PHead', field: 'phead' },
+        { label: 'DeltX', field: 'deltx' },
+        { label: 'DeltY', field: 'delty' },
+        { label: 'FeedRates', field: 'feedrates' },
+        { label: 'DNP', field: 'dnp' },
+        { label: 'Note', field: 'note' },
+        { label: 'Height', field: 'height' },
+        { label: 'Speed', field: 'speed' },
+        { label: 'Status', field: 'status' }
+      ];
+
+      const headerHtml = headers.map((h, i) => {
+        if (i === 0) {
+          return '<th class="select-col"><input type="checkbox" id="select-all-stack-cb"></th>';
+        }
+        const isActive = stacksSortField === h.field;
+        return `<th>
+          <div class="sortable-header">
+            <span>${h.label}</span>
+            <div class="sort-btns">
+              <span class="sort-btn ${isActive && stacksSortAsc ? 'active' : ''}" data-field="${h.field}" data-dir="asc">&#9650;</span>
+              <span class="sort-btn ${isActive && !stacksSortAsc ? 'active' : ''}" data-field="${h.field}" data-dir="desc">&#9660;</span>
+            </div>
+          </div>
+        </th>`;
+      }).join('');
+
+      table.innerHTML = `<thead><tr>${headerHtml}</tr></thead><tbody></tbody>`;
+
+      const tbody = table.querySelector('tbody');
+      APP.xfile.stations.forEach((station, idx) => {
+        const tr = document.createElement('tr');
+        tr.dataset.index = idx;
+        if (station.select) tr.classList.add('selected');
+        if (station.dnp) tr.classList.add('dnp-row');
+
+        tr.innerHTML = `
+          <td class="select-col"><input type="checkbox" class="row-select" ${station.select ? 'checked' : ''}></td>
+          <td>${station.no}</td>
+          <td contenteditable="true" data-field="id">${station.id}</td>
+          <td class="cell-toggle" data-field="phead" tabindex="0">${station.phead}</td>
+          <td contenteditable="true" data-field="deltx">${station.deltx.toFixed(2)}</td>
+          <td contenteditable="true" data-field="delty">${station.delty.toFixed(2)}</td>
+          <td contenteditable="true" data-field="feedrates">${station.feedrates}</td>
+          <td class="cell-toggle" data-field="dnp" tabindex="0">${station.dnp ? 'Yes' : 'No'}</td>
+          <td contenteditable="true" data-field="note">${escapeHtml(station.note)}</td>
+          <td contenteditable="true" data-field="height">${station.height.toFixed(2)}</td>
+          <td contenteditable="true" data-field="speed">${station.speed}</td>
+          <td contenteditable="true" data-field="status">${station.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Event listeners
+      document.getElementById('select-all-stack-cb').addEventListener('change', (e) => {
+        toggleSelectAll('stacks', e.target.checked);
+      });
+
+      tbody.querySelectorAll('.row-select').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.closest('tr').dataset.index);
+          APP.xfile.stations[idx].select = e.target.checked;
+          e.target.closest('tr').classList.toggle('selected', e.target.checked);
+        });
+      });
+
+      // DNP toggle cells
+      tbody.querySelectorAll('.cell-toggle').forEach(cell => {
+        cell.addEventListener('dblclick', (e) => {
+          handleStationToggle(e.target);
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleStationToggle(e.target);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('[contenteditable]').forEach(cell => {
+        // Store original value when cell gets focus
+        cell.addEventListener('focus', (e) => {
+          e.target.dataset.originalValue = e.target.textContent;
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            // Restore original value and blur
+            e.target.textContent = e.target.dataset.originalValue || '';
+            e.target.blur();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+          }
+        });
+        cell.addEventListener('blur', (e) => {
+          // Only save if value changed (not cancelled)
+          const idx = parseInt(e.target.closest('tr').dataset.index);
+          const field = e.target.dataset.field;
+          const value = e.target.textContent.trim();
+          updateStationField(idx, field, value);
+        });
+      });
+
+      // Sort button handlers
+      table.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const field = e.target.dataset.field;
+          const dir = e.target.dataset.dir;
+          sortStationsTable(field, dir === 'asc');
+        });
+      });
+    }
+
+    function sortStationsTable(field, asc) {
+      stacksSortField = field;
+      stacksSortAsc = asc;
+
+      APP.xfile.stations.sort((a, b) => {
+        let valA = a[field];
+        let valB = b[field];
+
+        // Handle DNP as boolean
+        if (field === 'dnp') {
+          valA = valA ? 1 : 0;
+          valB = valB ? 1 : 0;
+        }
+
+        // Handle string comparison
+        if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
+          if (asc) {
+            return valA.localeCompare(valB);
+          } else {
+            return valB.localeCompare(valA);
+          }
+        }
+
+        // Numeric comparison
+        if (asc) {
+          return valA - valB;
+        } else {
+          return valB - valA;
+        }
+      });
+
+      // Update No. field to reflect new order
+      APP.xfile.stations.forEach((s, i) => s.no = i);
+
+      renderStacksTable();
+      scheduleSave();
+    }
+
+    function handleStationToggle(cell) {
+      const tr = cell.closest('tr');
+      const idx = parseInt(tr.dataset.index);
+      const field = cell.dataset.field;
+      const station = APP.xfile.stations[idx];
+
+      if (field === 'phead') {
+        station.phead = station.phead === 1 ? 2 : 1;
+        cell.textContent = station.phead;
+        // Sync PHead to related Components
+        syncStationPHeadToComponents(station.note, station.phead);
+        scheduleSave();
+      } else if (field === 'dnp') {
+        station.dnp = !station.dnp;
+        cell.textContent = station.dnp ? 'Yes' : 'No';
+        tr.classList.toggle('dnp-row', station.dnp);
+        // Sync DNP to related Components
+        syncStationDNPToComponents(station.note, station.dnp);
+        scheduleSave();
+      }
+    }
+
+    // Sync Station DNP to all Components where Explain matches Station Note
+    function syncStationDNPToComponents(stationNote, dnp) {
+      if (!stationNote || !APP.xfile.components) return;
+      let count = 0;
+      APP.xfile.components.forEach(comp => {
+        if (comp.explain === stationNote) {
+          comp.dnp = dnp;
+          count++;
+        }
+      });
+      if (count > 0) {
+        log(`Synced DNP=${dnp ? 'Yes' : 'No'} to ${count} component(s) with Explain="${stationNote}"`, 'debug');
+        // Re-render Components table if visible
+        if (document.getElementById('tab-components').classList.contains('active')) {
+          renderComponentsTable();
+        }
+      }
+    }
+
+    function renderPanelTables() {
+      if (!APP.xfile) return;
+
+      // Panel Array
+      const arrayTable = document.getElementById('table-panel-array');
+      const arrayHeaders = ['No.', 'ID', 'IntervalX', 'IntervalY', 'NumX', 'NumY'];
+
+      arrayTable.innerHTML = `
+        <thead><tr>${arrayHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody></tbody>
+      `;
+
+      const arrayTbody = arrayTable.querySelector('tbody');
+      APP.xfile.panelArray.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.dataset.index = idx;
+        tr.innerHTML = `
+          <td>${row.no}</td>
+          <td contenteditable="true" data-field="id">${row.id}</td>
+          <td contenteditable="true" data-field="intervalx">${row.intervalx.toFixed(2)}</td>
+          <td contenteditable="true" data-field="intervaly">${row.intervaly.toFixed(2)}</td>
+          <td contenteditable="true" data-field="numx">${row.numx}</td>
+          <td contenteditable="true" data-field="numy">${row.numy}</td>
+        `;
+        arrayTbody.appendChild(tr);
+      });
+
+      arrayTbody.querySelectorAll('[contenteditable]').forEach(cell => {
+        cell.addEventListener('focus', (e) => {
+          e.target.dataset.originalValue = e.target.textContent;
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.target.textContent = e.target.dataset.originalValue || '';
+            e.target.blur();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+          }
+        });
+        cell.addEventListener('blur', (e) => {
+          const idx = parseInt(e.target.closest('tr').dataset.index);
+          const field = e.target.dataset.field;
+          const value = e.target.textContent.trim();
+          updatePanelArrayField(idx, field, value);
+        });
+      });
+
+      // Panel Coord
+      const coordTable = document.getElementById('table-panel-coord');
+      const coordHeaders = ['No.', 'ID', 'DeltX', 'DeltY'];
+
+      coordTable.innerHTML = `
+        <thead><tr>${coordHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody></tbody>
+      `;
+
+      const coordTbody = coordTable.querySelector('tbody');
+      APP.xfile.panelCoord.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.dataset.index = idx;
+        tr.innerHTML = `
+          <td>${row.no}</td>
+          <td contenteditable="true" data-field="id">${row.id}</td>
+          <td contenteditable="true" data-field="deltx">${row.deltx.toFixed(2)}</td>
+          <td contenteditable="true" data-field="delty">${row.delty.toFixed(2)}</td>
+        `;
+        coordTbody.appendChild(tr);
+      });
+
+      coordTbody.querySelectorAll('[contenteditable]').forEach(cell => {
+        cell.addEventListener('focus', (e) => {
+          e.target.dataset.originalValue = e.target.textContent;
+        });
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.target.textContent = e.target.dataset.originalValue || '';
+            e.target.blur();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+          }
+        });
+        cell.addEventListener('blur', (e) => {
+          const idx = parseInt(e.target.closest('tr').dataset.index);
+          const field = e.target.dataset.field;
+          const value = e.target.textContent.trim();
+          updatePanelCoordField(idx, field, value);
+        });
+      });
+    }
+
+    // Field update functions
+    function updateComponentField(idx, field, value) {
+      const comp = APP.xfile.components[idx];
+      if (!comp) return;
+
+      const numFields = ['id', 'phead', 'stno', 'deltx', 'delty', 'angle', 'height', 'skip', 'speed', 'delay'];
+
+      if (numFields.includes(field)) {
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+          comp[field] = num;
+        }
+      } else {
+        comp[field] = value;
+      }
+
+      scheduleSave();
+    }
+
+    function updateStationField(idx, field, value) {
+      const station = APP.xfile.stations[idx];
+      if (!station) return;
+
+      const numFields = ['id', 'phead', 'deltx', 'delty', 'feedrates', 'height', 'speed', 'status'];
+
+      if (numFields.includes(field)) {
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+          station[field] = num;
+        }
+      } else {
+        station[field] = value;
+      }
+
+      // Enforce unique Station IDs and sync to Components
+      if (field === 'id') {
+        enforceUniqueStationIds(idx);
+        syncStationIDToComponents(station.note, station.id);
+      }
+
+      // Sync PHead to related Components (Station.Note -> Component.Explain)
+      if (field === 'phead') {
+        syncStationPHeadToComponents(station.note, station.phead);
+      }
+
+      scheduleSave();
+    }
+
+    // Ensure all Station IDs are unique - renumber duplicates
+    function enforceUniqueStationIds(editedIdx) {
+      const stations = APP.xfile.stations;
+      const editedStation = stations[editedIdx];
+      const editedId = editedStation.id;
+
+      // Find stations with duplicate IDs (excluding the one just edited)
+      const duplicates = [];
+      stations.forEach((s, i) => {
+        if (i !== editedIdx && s.id === editedId) {
+          duplicates.push(i);
+        }
+      });
+
+      if (duplicates.length === 0) return;
+
+      // Get all used IDs
+      const usedIds = new Set(stations.map(s => s.id));
+
+      // Renumber duplicates to next available IDs
+      duplicates.forEach(dupIdx => {
+        let newId = 1;
+        while (usedIds.has(newId)) {
+          newId++;
+        }
+        stations[dupIdx].id = newId;
+        usedIds.add(newId);
+        log(`Station "${stations[dupIdx].note}" renumbered from ID ${editedId} to ${newId}`, 'info');
+        // Sync renumbered ID to Components
+        syncStationIDToComponents(stations[dupIdx].note, newId);
+      });
+
+      // Re-render the table to show changes
+      renderStacksTable();
+    }
+
+    // Sync Station ID to all Components STNo where Explain matches Station Note
+    function syncStationIDToComponents(stationNote, newId) {
+      if (!stationNote || !APP.xfile.components) return;
+      let count = 0;
+      APP.xfile.components.forEach(comp => {
+        if (comp.explain === stationNote) {
+          comp.stno = newId;
+          count++;
+        }
+      });
+      if (count > 0) {
+        log(`Synced STNo=${newId} to ${count} component(s) with Explain="${stationNote}"`, 'debug');
+        // Re-render Components table if visible
+        if (document.getElementById('tab-components').classList.contains('active')) {
+          renderComponentsTable();
+        }
+      }
+    }
+
+    // Sync Station PHead to all Components where Explain matches Station Note
+    function syncStationPHeadToComponents(stationNote, phead) {
+      if (!stationNote || !APP.xfile.components) return;
+      let count = 0;
+      APP.xfile.components.forEach(comp => {
+        if (comp.explain === stationNote) {
+          comp.phead = phead;
+          count++;
+        }
+      });
+      if (count > 0) {
+        log(`Synced PHead=${phead} to ${count} component(s) with Explain="${stationNote}"`, 'debug');
+        // Re-render Components table if visible
+        if (document.getElementById('tab-components').classList.contains('active')) {
+          renderComponentsTable();
+        }
+      }
+    }
+
+    function updatePanelArrayField(idx, field, value) {
+      const row = APP.xfile.panelArray[idx];
+      if (!row) return;
+
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        row[field] = num;
+      }
+
+      scheduleSave();
+    }
+
+    function updatePanelCoordField(idx, field, value) {
+      const row = APP.xfile.panelCoord[idx];
+      if (!row) return;
+
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        row[field] = num;
+      }
+
+      scheduleSave();
+    }
+
+    // Selection helpers
+    function toggleSelectAll(tableType, selected) {
+      if (tableType === 'components') {
+        APP.xfile.components.forEach(c => c.select = selected);
+        renderComponentsTable();
+      } else if (tableType === 'stacks') {
+        APP.xfile.stations.forEach(s => s.select = selected);
+        renderStacksTable();
+      }
+    }
+
+    function toggleDNP(tableType) {
+      if (tableType === 'components') {
+        APP.xfile.components.filter(c => c.select).forEach(c => c.dnp = !c.dnp);
+        renderComponentsTable();
+      } else if (tableType === 'stacks') {
+        APP.xfile.stations.filter(s => s.select).forEach(s => {
+          s.dnp = !s.dnp;
+          syncStationDNPToComponents(s.note, s.dnp);
+        });
+        renderStacksTable();
+      }
+      scheduleSave();
+    }
+
+    function toggleHead(tableType) {
+      if (tableType === 'stacks') {
+        APP.xfile.stations.filter(s => s.select).forEach(s => {
+          s.phead = s.phead === 1 ? 2 : 1;
+          syncStationPHeadToComponents(s.note, s.phead);
+        });
+        renderStacksTable();
+      }
+      scheduleSave();
+    }
+
+    function deleteSelected(tableType) {
+      if (tableType === 'components') {
+        APP.xfile.components = APP.xfile.components.filter(c => !c.select);
+        APP.xfile.components.forEach((c, i) => c.no = i);
+        renderComponentsTable();
+      } else if (tableType === 'stacks') {
+        APP.xfile.stations = APP.xfile.stations.filter(s => !s.select);
+        APP.xfile.stations.forEach((s, i) => s.no = i);
+        renderStacksTable();
+      }
+      scheduleSave();
+    }
+
+    // Offset handling
+    function updateOffsetInputs() {
+      if (!APP.xfile) return;
+      document.getElementById('offset-x').value = APP.xfile.globalOffset.x;
+      document.getElementById('offset-y').value = APP.xfile.globalOffset.y;
+    }
+
+    function handleOffsetChange() {
+      if (!APP.xfile) return;
+      APP.xfile.globalOffset.x = parseFloat(document.getElementById('offset-x').value) || 0;
+      APP.xfile.globalOffset.y = parseFloat(document.getElementById('offset-y').value) || 0;
+      scheduleSave();
+    }
+
+    // Console resize
+    function initConsoleResize() {
+      const panel = document.getElementById('console-panel');
+      const handle = document.getElementById('console-resize');
+      let startY, startHeight;
+
+      handle.addEventListener('mousedown', (e) => {
+        startY = e.clientY;
+        startHeight = panel.offsetHeight;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      function onMouseMove(e) {
+        const delta = startY - e.clientY;
+        const newHeight = Math.min(Math.max(startHeight + delta, 100), window.innerHeight * 0.6);
+        panel.style.height = newHeight + 'px';
+      }
+
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
+    }
+
+    // Tab switching
+    function initTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchToTab(btn.dataset.tab);
+        });
+      });
+
+      // Restore last active tab from localStorage
+      const savedTab = localStorage.getItem('charmtool_active_tab');
+      if (savedTab) {
+        switchToTab(savedTab);
+      }
+    }
+
+    function switchToTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+      if (btn) {
+        btn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        // Save to localStorage
+        localStorage.setItem('charmtool_active_tab', tab);
+        // Re-render the table for this tab to reflect any synced changes
+        if (tab === 'components') renderComponentsTable();
+        else if (tab === 'stacks') renderStacksTable();
+        else if (tab === 'panel') renderPanelTables();
+        else if (tab === 'pos') renderPOSTable();
+      }
+    }
+
+    // Modal handling
+    function initModals() {
+      document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.classList.remove('visible');
+          }
+        });
+        modal.querySelectorAll('[data-close]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            modal.classList.remove('visible');
+          });
+        });
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
+      initModals();
+      initConsoleResize();
+      loadXFile();
+
+      // Toolbar buttons
+      document.getElementById('btn-load-pos').addEventListener('click', () => {
+        document.getElementById('file-input-pos').click();
+      });
+
+      document.getElementById('btn-load-stack').addEventListener('click', () => {
+        document.getElementById('file-input-stack').click();
+      });
+
+      document.getElementById('btn-export').addEventListener('click', exportDPV);
+
+      document.getElementById('btn-getting-started').addEventListener('click', () => {
+        document.getElementById('modal-getting-started').classList.add('visible');
+      });
+
+      document.getElementById('btn-console').addEventListener('click', () => {
+        const panel = document.getElementById('console-panel');
+        panel.classList.toggle('visible');
+        document.getElementById('btn-console').classList.toggle('active', panel.classList.contains('visible'));
+      });
+
+      document.getElementById('btn-help').addEventListener('click', () => {
+        document.getElementById('modal-help').classList.add('visible');
+      });
+
+      // Export modal handlers
+      document.getElementById('btn-export-confirm').addEventListener('click', () => {
+        const filename = document.getElementById('export-filename').value.trim();
+        if (!filename) {
+          alert('Please enter a filename');
+          return;
+        }
+        document.getElementById('modal-export').classList.remove('visible');
+        doExport(filename);
+      });
+
+      document.getElementById('export-filename').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('btn-export-confirm').click();
+        }
+      });
+
+      document.getElementById('btn-console-clear').addEventListener('click', () => {
+        document.getElementById('console-output').innerHTML = '';
+      });
+
+      document.getElementById('btn-console-copy').addEventListener('click', () => {
+        const output = document.getElementById('console-output');
+        const text = output.innerText || output.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          log('Console copied to clipboard', 'debug');
+        }).catch(err => {
+          log('Failed to copy: ' + err, 'error');
+        });
+      });
+
+      // File inputs
+      document.getElementById('file-input-pos').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          uploadPOS(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      document.getElementById('file-input-stack').addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          uploadStack(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      // Offset inputs
+      document.getElementById('offset-x').addEventListener('change', handleOffsetChange);
+      document.getElementById('offset-y').addEventListener('change', handleOffsetChange);
+
+      // Action buttons - Components
+      document.getElementById('btn-select-all-comp').addEventListener('click', () => toggleSelectAll('components', true));
+      document.getElementById('btn-deselect-all-comp').addEventListener('click', () => toggleSelectAll('components', false));
+      document.getElementById('btn-toggle-dnp-comp').addEventListener('click', () => toggleDNP('components'));
+      document.getElementById('btn-delete-selected-comp').addEventListener('click', () => deleteSelected('components'));
+
+      // Action buttons - Stacks
+      document.getElementById('btn-select-all-stack').addEventListener('click', () => toggleSelectAll('stacks', true));
+      document.getElementById('btn-deselect-all-stack').addEventListener('click', () => toggleSelectAll('stacks', false));
+      document.getElementById('btn-toggle-head-stack').addEventListener('click', () => toggleHead('stacks'));
+      document.getElementById('btn-toggle-dnp-stack').addEventListener('click', () => toggleDNP('stacks'));
+      document.getElementById('btn-delete-selected-stack').addEventListener('click', () => deleteSelected('stacks'));
+
+      log('CharmTool initialized', 'info');
+    });
+  </script>
+</body>
+</html>
