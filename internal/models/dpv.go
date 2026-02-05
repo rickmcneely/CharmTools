@@ -457,14 +457,6 @@ func GenerateDPV(xf *XFile, filename string) (string, error) {
 			i, pa.ID, pa.IntervalX, pa.IntervalY, pa.NumX, pa.NumY))
 	}
 
-	// Panel_Coord table
-	sb.WriteString("\r\n")
-	sb.WriteString("Table,No.,ID,DeltX,DeltY\r\n")
-	for i, pc := range xf.PanelCoord {
-		sb.WriteString(fmt.Sprintf("Panel_Coord,%d,%d,%.2f,%.2f\r\n",
-			i, pc.ID, pc.DeltX, pc.DeltY))
-	}
-
 	// Build Station Status map for auto-fixing Skip values
 	stationStatusMap := make(map[int]int)
 	for _, s := range activeStations {
