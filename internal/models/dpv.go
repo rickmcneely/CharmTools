@@ -497,6 +497,27 @@ func GenerateDPV(xf *XFile, filename string) (string, error) {
 			c.Height, skip, c.Speed, csvEscape(c.Explain), csvEscape(c.Note), c.Delay))
 	}
 
+	// ICTray table (empty, header only)
+	sb.WriteString("\r\n")
+	sb.WriteString("Table,No.,ID,CenterX,CenterY,IntervalX,IntervalY,NumX,NumY,Start\r\n")
+
+	// PcbCalib table
+	sb.WriteString("\r\n")
+	sb.WriteString("Table,No.,nType,nAlg,nFinished\r\n")
+	sb.WriteString("PcbCalib,0,0,0,0\r\n")
+
+	// CalibPoint table (3 calibration points: UL, LR, LL)
+	sb.WriteString("\r\n")
+	sb.WriteString("Table,No.,ID,offsetX,offsetY,Note,Model,Type,DevX,DevY\r\n")
+	sb.WriteString("CalibPoint,0,1,0,0,,0,0,0,0\r\n")
+	sb.WriteString("CalibPoint,1,2,0,0,,0,0,0,0\r\n")
+	sb.WriteString("CalibPoint,2,3,0,0,,0,0,0,0\r\n")
+
+	// CalibFator table
+	sb.WriteString("\r\n")
+	sb.WriteString("Table,No.,PCBX1,PCBY1,PCBX2,PCBY2,PCBX3,PCBY3,SMTX1,SMTY1,SMTX2,SMTY2,SMTX3,SMTY3,DeltaAngle\r\n")
+	sb.WriteString("CalibFator,0,0,0,0,0,0,0,0,0,0,0,0,0,0\r\n")
+
 	return sb.String(), nil
 }
 
