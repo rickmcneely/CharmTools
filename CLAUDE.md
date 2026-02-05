@@ -74,6 +74,8 @@ Machine Manual: `C:\Users\mcnee\OneDrive\Documents\CharmHigh\chm-t48vb user manu
 - Panel_Array table is REQUIRED - machine won't allow PCB calibration without it
 - Station DeltX/DeltY of 0,0 means feeders need calibration on machine
 - Skip flags are auto-resolved to match Station Status on export
+- Calibration tables (ICTray, PcbCalib, CalibPoint, CalibFator) REQUIRED - Run/Edit/Batch fails without them
+- Panel_Coord table is NOT needed (removed from export)
 
 ## TODO
 
